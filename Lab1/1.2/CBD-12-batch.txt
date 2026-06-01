@@ -1,0 +1,11 @@
+SET nome "Claudino"
+SET curso "Engenharia Informática"
+SET clube "Sporting"
+SET universidade "UA"
+SET ano 2
+SET cadeira "FBD"
+SET passou true
+GET nome
+GET curso
+GET passou
+KEYS *

@@ -1,0 +1,8 @@
+Diferenças entre MongoDB e Redis:
+
+- Em MongoDB é armazenado cada pedido como documento com username, product e timestamp. Em Redis, cada pedido é armazenado como um hash com os mesmos campos.
+- Em MongoDB o limite é visto com uma query, que vê os pedidos feitos pelo utilizador nessa janela de tempo. Em Redis, a quantidade é incrementada com hincrBy e o limite é verificado através do TTL a usar o expire.
+- Em MongoDB o armazenamento é persiste e tem consulas complexas. Em Redis o armazenamento é em memória e tem consultas simplese mais rápidas.
+
+- Logo em termos de desempenho o Redis é mais rápido que MongoDB, mas MongoDB é melhor para armazenar dados e realizar consultas mais complexas.
+- Neste exercício Redis é mais adequado pois precisamos de uma solução rápida para verificar o limite de pedidos em tempo real, e não precisamos de armazenar os dados a longo prazo.

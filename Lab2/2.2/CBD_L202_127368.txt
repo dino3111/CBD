@@ -1,0 +1,213 @@
+// NMEC: 127368
+
+// 1. Liste todos os documentos da coleção.
+db.restaurants.find()
+// 3772
+
+// 2. Apresente os campos restaurant_id, nome, localidade e gastronomia para todos os documentos da coleção
+db.restaurants.find(
+    {},
+    {
+        restaurant_id: 1,
+        nome: 1,
+        localidade: 1,
+        gastronomia: 1,
+        _id: 0
+    }
+)
+// 3772
+
+// 3. Apresente os campos restaurant_id, nome, localidade e código postal (zipcode), mas exclua o campo _id de todos os documentos da coleção.
+db.restaurants.find(
+    {},
+    {
+        nome: 1,
+        localidade: 1,
+        "address.zipcode": 1,
+        _id: 0,
+    }
+)
+// 3772
+
+// 4. Indique o total de restaurantes localizados no Bronx.
+db.restaurants.find({localidade: "Bronx"}).count()
+// 309
+
+// 5. Apresente os primeiros 15 restaurantes localizados no Bronx, ordenados por ordem crescente de nome.
+db.restaurants.find({localidade: "Bronx"}).sort({nome: 1}).limit(15)
+// 15
+
+// 6. Liste todos os restaurantes que tenham pelo menos um score superior a 85.
+db.restaurants.find({"grades.score": {$gte: 80, $lte: 100}})
+// 5
+
+// 7. Encontre os restaurantes que obtiveram uma ou mais pontuações (score) entre [80 e 100].
+db.restaurants.find({grades: {$elemMatch: {score: {$gt:80,$lt:100}}}})
+// 3
+
+// 8. Indique os restaurantes com latitude inferior a -95,7.
+db.restaurants.find({"address.coord.0": {$lt: -95.7}})
+// 3
+
+// 9. Indique os restaurantes que não têm gastronomia "American", tiveram uma (ou mais) pontuação superior a 70 e estão numa latitude inferior a -65.
+db.restaurants.find({gastronomia: {$ne: "American"}, "grades.score": {"$gt": 70}, "address.coord.0": {"$lt": -65}})
+// 5
+
+// 10. Liste o restaurant_id, o nome, a localidade e gastronomia dos restaurantes cujo nome começam por "Wil"
+db.restaurants.find({nome: {"$regex": "^Wil", "$options": "i"} }, {restaurant_id: 1, nome: 1, localidade: 1, gastronomia: 1, _id: 0})
+// 3
+
+// 11. Liste o nome, a localidade e a gastronomia dos restaurantes que pertencem ao Bronx e cuja gastronomia é do tipo "American" ou "Chinese".
+db.restaurants.find({localidade: "Bronx", gastronomia: {$in: ["American", "Chinese"]}}, {nome: 1, localidade: 1, gastronomia: 1, _id: 0})
+// 91
+
+// 12. Liste o restaurant_id, o nome, a localidade e a gastronomia dos restaurantes localizados em "Staten Island", "Queens", ou "Brooklyn".
+db.restaurants.find({ localidade: { "$in" : ["Staten Island", "Queens", "Brooklyn" ] }}, {restaurant_id: 1, nome: 1, localidade: 1, gastronomia: 1, _id: 0})
+//1580
+
+// 13. Liste o nome, a localidade, o score e gastronomia dos restaurantes que alcançaram sempre pontuações inferiores ou igual a 3.
+db.restaurants.find({ "grades.score": { $lte: 3 }}, {nome: 1, localidade: 1, "grades.score": 1, gastronomia: 1, _id: 0})
+// 1089
+
+// 14. Liste o nome e as avaliações dos restaurantes que obtiveram uma avaliação com um grade "A", um score 10 na data "2014-08-11T00: 00: 00Z" (ISODATE).
+db.restaurants.find({ grades: { $elemMatch: { grade: "A", score: 10, date: ISODate("2014-08-11T00:00:00Z") }}}, {nome: 1, grades: 1, _id: 0})
+// 6
+
+// 15. Liste o restaurant_id, o nome e os score dos restaurantes nos quais a segunda avaliação foi grade "A" e ocorreu em ISODATE "2014-08-11T00: 00: 00Z".
+db.restaurants.find({ "grades.1.grade": "A", "grades.1.date": ISODate("2014-08-11T00:00:00Z") }, {restaurant_id: 1, nome: 1, grades: 1, _id: 0})
+// 2
+
+// 16. Liste o restaurant_id, o nome, o endereço (address) dos restaurantes onde o 2º elemento da matriz de coordenadas (coord) tem um valor superior a 42 e inferior ou igual a 52.
+db.restaurants.find({ "address.coord.1": { $gte: 42, $lte: 52 }}, {restaurant_id: 1, nome: 1, address: 1, _id: 0})
+// 7
+
+// 17. Liste nome, gastronomia e localidade de todos os restaurantes, ordenando por ordem crescente da gastronomia e, em segundo, por ordem decrescente de localidade.
+db.restaurants.find({},{nome: 1, gastronomia: 1, localidade: 1, _id: 0}).sort({gastronomia: 1, localidade: -1})
+// 3772
+
+// 18. Liste nome, localidade, grade e gastronomia de todos os restaurantes localizados em Brooklyn que não incluem gastronomia "American" e obtiveram uma classificação (grade) "A". Deve apresentá-los por ordem decrescente de gastronomia.
+db.restaurants.find({localidade: "Brooklyn", gastronomia: { $ne: "American" }, "grades.grade": "A" }, {nome: 1, localidade: 1, "grades.grade": 1, gastronomia: 1}).sort({gastronomia: -1 })
+// 493
+
+// 19. Indique o número total de avaliações (numGrades) na coleção.
+db.restaurants.aggregate([{ $group: { _id: null, "numGrades": { $sum: { $size: "$grades" }}}}])
+// 18142
+
+// 20. Apresente o nome e número de avaliações (numGrades) dos 3 restaurantes com mais avaliações.
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $group: {
+      _id: { $isoDayOfWeek: "$grades.date" },
+      numGrades: { $sum: 1 }
+    }
+  }
+])
+// 7
+
+// 21. Apresente o número total de avaliações (numGrades) em cada dia da semana.
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $group: {
+      _id: { $isoDayOfWeek: "$grades.date" },
+      numGrades: { $sum: 1 }
+    }
+  }
+])
+// 7
+
+// 22. Conte o total de restaurantes existentes em cada localidade.
+db.restaurants.aggregate([
+  { $group: {
+      _id: "$localidade",
+      numRestaurantes: { $sum: 1 }
+    }
+  }
+])
+// 5
+
+// 23. Indique os restaurantes que têm gastronomia "Portuguese", o somatório de score é superior a 50 e estão numa latitude inferior a -60.
+db.restaurants.aggregate([
+  { $match: { gastronomia: "Portuguese", "address.coord.0": { $lt: -60 } } },
+  { $project: { nome: 1, sumScore: { $sum: "$grades.score" } } },
+  { $match: { sumScore: { $gt: 50 } } }
+])
+// 2
+
+// 24. Apresente o número de gastronomias diferentes na rua "Fifth Avenue"
+db.restaurants.aggregate([
+  { $match: { "address.rua": "Fifth Avenue" } },
+  { $group: { _id: "$gastronomia" } },
+  { $count: "gastronomias" }
+])
+// 4
+
+// 25. Apresente o nome e o score médio (avgScore) e número de avaliações (numGrades) dos restaurantes com score médio superior a 30 desde 1-Jan-2014.
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $match: { "grades.date": { $gte: ISODate("2014-01-01") } } },
+  { $group: {
+      _id: "$_id",
+      nome: { $first: "$nome" },
+      avgScore: { $avg: "$grades.score" },
+      numGrades: { $sum: 1 }
+    }
+  },
+  { $match: { avgScore: { $gt: 30 } } },
+  { $project: { nome: 1, avgScore: 1, numGrades: 1 } }
+])
+// 32
+
+// 26. Apresente o score máximo e mínimo alguma vez atribuído em cada localidade.
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $group: {
+      _id: "$localidade",
+      maxScore: { $max: "$grades.score" },
+      minScore: { $min: "$grades.score" }
+  }}
+])
+// 5
+
+// 27. Para cada ano, indique o número total de avaliações realizadas, ordenado por ano crescente.
+db.restaurants.aggregate([
+  { $unwind: "$grades" },
+  { $group: {
+      _id: { $year: "$grades.date" },
+      numGrades: { $sum: 1 }
+  }},
+  { $sort: { _id: 1 } }
+])
+// 6
+
+// 28. Indique, por localidade, o número de restaurantes distintos com gastronomia "American" ou "Chinese", ordenados por ordem decrescente do total.
+db.restaurants.aggregate([
+  { $match: { gastronomia: { $in: ["American", "Chinese"] } } },
+  { $group: {
+      _id: { localidade: "$localidade", gastronomia: "$gastronomia" },
+      total: { $sum: 1 }
+  }},
+  { $sort: { total: -1 } }
+])
+// 10
+
+// 29. Indique as ruas que têm mais do que 3 restaurantes, apresentando o nome da rua e o total, ordenados por ordem decrescente de total.
+db.restaurants.aggregate([
+  { $group: {
+      _id: "$address.rua",
+      total: { $sum: 1 }
+  }},
+  { $match: { total: { $gt: 3 } } },
+  { $sort: { total: -1 } },
+  { $project: { _id: 0, rua: "$_id", total: 1 } }
+])
+// 228
+
+// 30. Liste os restaurantes que foram avaliados em 2015, apresentando o nome e a localidade.
+db.restaurants.find(
+  { "grades.date": {
+      $gte: ISODate("2015-01-01T00:00:00Z"),
+      $lt: ISODate("2016-01-01T00:00:00Z")
+  }},
+  { nome: 1, localidade: 1, _id: 0 }
+)
+// 232

@@ -1,0 +1,118 @@
+NMEC: 127368
+
+#1
+MATCH (a:Person)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(a) 
+RETURN a.name AS Actor, m.title AS Movie
+
+#2
+MATCH (p1:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.released > 2005
+RETURN m.title AS Movie, collect(p1.name) AS Actors
+
+#3
+MATCH (a)-[r]->(b)
+WITH a, b, count(r) AS numRelations
+WHERE numRelations > 1
+RETURN a.name, b.name, numRelations
+
+#4
+MATCH (p1:Person)-[:REVIEWED]->(m:Movie)<-[:REVIEWED]-(p2:Person)
+WHERE p1 <> p2
+RETURN p1.name, p2.name, m.title
+
+#5
+MATCH (p1:Person)-[:ACTED_IN]->(m:Movie)<-[:ACTED_IN]-(p2:Person)
+WHERE p1 <> p2
+WITH p1, p2, collect(m.title) AS Movies, count(m) AS numMovies
+WHERE numMovies > 1
+RETURN p1.name, p2.name, movies, numMovies
+
+#6
+MATCH (m:Movie {title: "Apollo 13"})<-[:ACTED_IN]-(p:Person)
+RETURN "Apollo 13" as Movie, m.released as Released, avg(m.released - p.born) as AverageAge
+
+#7
+MATCH (m:Movie)<-[:ACTED_IN]-(p:Person)
+WITH m, (m.released - p.born) AS age
+RETURN m.title AS Movie, round(avg(age), 2) AS AverageAge 
+ORDER BY AverageAge DESC
+LIMIT 10
+
+#8
+MATCH (m:Movie)<-[:ACTED_IN]-(p:Person)
+WITH m, avg((m.released - p.born)) AS age, COLLECT(p) AS actors 
+RETURN m, actors ORDER BY age ASC LIMIT 1 
+
+#9
+MATCH path = shortestPath((p1:Person {name: "John Cusack"})-[*]-(p2:Person {name: "Demi Moore"}))
+RETURN path
+
+#10
+MATCH path = shortestPath((p1:Person {name: "Keanu Reeves"})-[*]-(p2:Person {name: "Tom Cruise"}))
+RETURN length(path)
+
+#11
+MATCH (p1:Person), (p2:Person)
+WHERE p1.name STARTS WITH 'Jim' AND p2.name STARTS WITH 'Kevin'
+MATCH path = shortestPath((p1)-[*]-(p2))
+RETURN p1.name, p2.name, length(path)
+
+#12
+MATCH (p1:Person {name: "Jim Cash"})-[*2]-(p2:Person)
+WHERE p1 <> p2
+RETURN DISTINCT p2.name AS Person
+
+#13
+MATCH path = shortestPath((p1:Person {name: "Kevin Bacon"})-[*]-(p2:Person))
+WHERE p1 <> p2
+RETURN p2.name AS Person, length(path) AS distance
+ORDER BY distance DESC
+LIMIT 1
+
+#14
+MATCH path = shortestPath((p1:Person)-[*]-(p2:Person))
+WHERE p1 <> p2
+RETURN p1.name AS Person1, p2.name AS Person2, length(path) AS distance
+ORDER BY distance DESC
+LIMIT 1
+
+#15
+MATCH (p1:Person), (p2:Person)
+WHERE p1 <> p2
+MATCH path = shortestPath((p1)-[*]-(p2))
+WITH length(path) AS distance, count(*) AS numPairs
+RETURN distance, numPairs/2 AS numPairs
+ORDER BY distance
+
+#16
+MATCH (p1:Person), (p2:Person)
+WHERE p1 <> p2
+MATCH path = shortestPath((p1)-[:ACTED_IN*]-(p2))
+WITH p1, avg(length(path)) AS avgDistance
+RETURN p1.name AS Person, avgDistance
+ORDER BY avgDistance ASC
+LIMIT 10
+
+#17
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+WHERE any(role IN r.roles WHERE role STARTS WITH 'Dr.')
+RETURN p.name AS Actor, collect(r.roles) AS Roles
+
+#18 Quantos atores atuaram num só filme
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WITH p, count(m) AS numMovies
+WHERE numMovies = 1
+RETURN p.name AS Actor
+
+#19 Quantos filmes cujo elenco seja composto exclusivamente por atores 
+#   que nunca trabalharam com o mesmo realizador em nenhum outro filme?
+MATCH (m:Movie)<-[:ACTED_IN]-(a:Person)
+MATCH (m)<-[:DIRECTED]-(d:Person)
+WITH m, d, collect(DISTINCT a) AS cast
+WHERE none(a IN cast WHERE 
+    EXISTS {
+        MATCH (a)-[:ACTED_IN]->(:Movie)<-[:DIRECTED]-(d)
+        WHERE a <> d
+    }
+)
+RETURN m.title AS Movie

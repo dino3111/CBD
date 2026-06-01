@@ -1,0 +1,74 @@
+Criar collection:
+
+CREATE KEYSPACE lol
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+Entrar:
+
+USE lol;
+
+Criar tabela player:
+
+CREATE TABLE player (
+    name TEXT PRIMARY KEY,
+    level INT,
+    rank TEXT,
+    favourite_champions LIST<TEXT>
+);
+
+Insert de alguns jogadores:
+
+INSERT INTO player (name, level, rank, favourite_champions)
+VALUES ('D7NOX', 108, 'Bronze', ['Morgana', 'Wukong']);
+
+INSERT INTO player (name, level, rank, favourite_champions)
+VALUES ('Manééé', 16, null, ['Yasuo', 'Soraka']);
+
+SELECT * FROM player;
+
+Dar update ao rank:
+
+UPDATE player
+SET rank = 'Iron'
+WHERE name = 'Manééé';
+
+Dar update aos Champions Favoritos:
+
+UPDATE player
+SET favourite_champions = favourite_champions + ['Yasuo']
+WHERE name = 'D7NOX';
+
+SELECT * FROM player;
+
+Eliminar um player
+
+DELETE FROM player
+WHERE name = 'Manééé';
+
+SELECT * FROM player;
+
+Tuplo de Exemplo: 
+
+CREATE TABLE tuple_exemplo (
+    id INT PRIMARY KEY,
+    position TUPLE<INT, INT>
+);
+
+INSERT INTO tuple_exemplo (id, position)
+VALUES (1, (10, 20));
+
+SELECT * FROM tuple_exemplo;
+
+Inserir jogador com Time to live de 60 segundos:
+
+INSERT INTO player (name, level, rank)
+VALUES ('TempPlayer', 1, 'Iron')
+USING TTL 60;
+
+Ver:
+
+SELECT * FROM player;
+
+Ver passado 60 segundos:
+
+SELECT * FROM player;

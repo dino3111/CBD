@@ -1,0 +1,77 @@
+NMEC: 127368
+
+a)
+
+Nos: Person {svn_id, real_name}, Project {name}, Organization {name}
+Relacoes: (Person)-[:MEMBER_OF {role}]->(Project), (Person)-[:WORKS_FOR]->(Organization)
+
+Constraints:
+  CREATE CONSTRAINT FOR (p:Person)       REQUIRE p.svn_id IS UNIQUE;
+  CREATE CONSTRAINT FOR (pr:Project)     REQUIRE pr.name  IS UNIQUE;
+  CREATE CONSTRAINT FOR (o:Organization) REQUIRE o.name   IS UNIQUE;
+
+CSV:
+  LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+  FIELDTERMINATOR ','
+  MERGE (p:Person { svn_id: trim(row.svn_id) })
+    ON CREATE SET p.real_name = trim(row.real_name)
+  MERGE (pr:Project { name: trim(row.project_name) })
+  MERGE (o:Organization { name: trim(row.organization) })
+  MERGE (p)-[:MEMBER_OF { role: trim(row.role_on_project) }]->(pr)
+  MERGE (p)-[:WORKS_FOR]->(o);
+
+b)
+
+Coloquei o excel nesta pasta:
+~/.config/neo4j-desktop/Application/Data/dbmss/dbms-3eb1b278-342c-4383-94d7-c424dba9924b/import/
+
+Criei a db:
+  CREATE DATABASE github IF NOT EXISTS;
+  :use github
+
+c)
+
+#1
+MATCH (p:Person)
+RETURN p;
+
+#2
+MATCH (p:Person)
+RETURN p.real_name AS nome;
+
+#3
+MATCH (p:Person)-[:MEMBER_OF]->(pr:Project)
+WITH pr, count(p) AS membros
+WHERE membros >= 1
+RETURN pr;
+
+#4
+MATCH (p:Person)-[:MEMBER_OF]->(pr:Project)
+RETURN p.real_name AS utilizador, count(DISTINCT pr) AS total_projetos;
+
+#5
+MATCH (p:Person)-[:MEMBER_OF]->(pr:Project)
+RETURN p.real_name AS utilizador, count(DISTINCT pr) AS total_projetos
+ORDER BY total_projetos DESC;
+
+#6
+MATCH (p:Person)-[:MEMBER_OF]->(pr:Project)
+RETURN pr.name AS projeto, count(DISTINCT p) AS total_membros;
+
+#7
+MATCH (p:Person)-[m:MEMBER_OF]->(pr:Project)
+WHERE toLower(trim(m.role)) = 'committer'
+RETURN pr.name AS projeto, count(DISTINCT p) AS total_committers;
+
+#8
+MATCH (atm:Person { svn_id: 'atm' })-[:MEMBER_OF]->(pr:Project)<-[:MEMBER_OF]-(outro:Person)
+WHERE outro <> atm
+RETURN atm.real_name AS atm_nome, outro.real_name AS utilizador, pr.name AS projeto;
+
+#9
+MATCH (atm:Person { svn_id: 'atm' })-[r1:MEMBER_OF]->(pr:Project)<-[r2:MEMBER_OF]-(outro:Person)
+WHERE toLower(trim(r1.role)) = 'pmc'
+  AND toLower(trim(r2.role)) = 'committer'
+  AND outro <> atm
+RETURN DISTINCT outro.real_name AS utilizador, pr.name AS projeto;
+

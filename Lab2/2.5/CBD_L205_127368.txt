@@ -1,0 +1,124 @@
+use pokemonDB
+
+db.pokemons.countDocuments()
+
+// 2.3) .find()
+
+// Fire Pokémons com spawn chance de 50%
+db.pokemons.find(
+  { type: "Fire", spawn_chance: { $gt: 0.5 } },
+  { name: 1, spawn_chance: 1, _id: 0 }
+)
+
+// Pokémons com + de 1 tipo e com fraqueza de Gelo
+db.pokemons.find(
+  { "type.1": { $exists: true }, weaknesses: "Ice" },
+  { name: 1, type: 1, weaknesses: 1, _id: 0 }
+)
+
+// Pokémons com + de 1 evolução
+db.pokemons.find(
+  { "next_evolution.1": { $exists: true } },
+  { name: 1, next_evolution: 1, _id: 0 }
+)
+
+// Pokémons raros que não dão para obter através de ovos
+db.pokemons.find(
+  { spawn_chance: { $lt: 0.01 }, egg: "Not in Eggs" },
+  { name: 1, spawn_chance: 1, egg: 1, _id: 0 }
+)
+
+// Pokémons fracos contra Água e Eletric
+db.pokemons.find(
+  { weaknesses: { $all: ["Water", "Electric"] } },
+  { name: 1, weaknesses: 1, _id: 0 }
+)
+
+// Pokémons com Multiplier superior a 2
+db.pokemons.find(
+  { multipliers: { $elemMatch: { $gt: 2 } } },
+  { name: 1, multipliers: 1, _id: 0 }
+)
+
+// 2.4) .aggregate()
+
+// Total de Pokémons por Tipo
+db.pokemons.aggregate([
+  { $unwind: "$type" },
+  {
+    $group: {
+        _id: "$type",
+        total: { $sum: 1 }
+    }
+  },
+  { $sort: { total: -1 } }
+])
+
+// Top 5 Pokémons com mais fraquezas
+db.pokemons.aggregate([
+  {
+    $project: {
+        name: 1,
+        num_weaknesses: { $size: "$weaknesses" },
+        _id: 0,
+    }
+  },
+  { $sort: { num_weaknesses: -1 } },
+  { $limit: 5 }
+])
+
+// Número de Evoluções por Pokémons de Fogo
+db.pokemons.aggregate([
+    { $match: { type: "Fire" } },
+    {
+        $project: {
+            name: 1,
+            _id: 0,
+        num_evolutions: {
+            $cond: {
+                if: { $isArray: "$next_evolution" },
+                then: { $size: "$next_evolution" },
+                else: 0
+                }
+            }
+        }
+    }
+])
+
+// Média de spawn_chance dos Pokémons por type
+db.pokemons.aggregate([
+  { $unwind: "$type" },
+  {
+    $group: {
+      _id: "$type",
+      media_spawn: { $avg: "$spawn_chance" }
+    }
+  },
+  { $sort: { media_spawn: -1 } }
+])
+
+// Total de Pokémons que podem sair nos Ovos
+db.pokemons.aggregate([
+  {
+    $group: {
+      _id: "$egg",
+      total: { $sum: 1 }
+    }
+  },
+  { $sort: { total: -1 } }
+])
+
+// Pokémon mais alto
+db.pokemons.aggregate([
+  {
+    $project: {
+      name: 1,
+        _id: 0,
+      height: { $toDouble: { $replaceAll: { input: "$height", find: " m", replacement: "" } } }
+    }
+  },
+  { $sort: { height: -1 } },
+  { $limit: 1 }
+])
+
+

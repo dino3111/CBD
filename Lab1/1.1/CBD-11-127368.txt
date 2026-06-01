@@ -1,0 +1,12 @@
+set k1 ola
+get k1
+hset mykeys1 nome "dino dino" id 212121
+hgetall mykeys1
+HGET mykeys1
+hget mykeys1
+hget 
+hget mykeys1
+hget mykeys
+h
+hgetall mykeys1 
+exit

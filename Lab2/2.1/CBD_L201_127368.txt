@@ -1,0 +1,65 @@
+show dbs
+// apareceu isto:
+//
+//    [
+//  {
+//    "empty": false,
+//    "name": "admin",
+//    "sizeOnDisk": 40960
+//  },
+//  {
+//    "empty": false,
+//    "name": "config",
+//    "sizeOnDisk": 110592
+//  },
+//  {
+//    "empty": false,
+//    "name": "local",
+//    "sizeOnDisk": 40960
+//  },
+//  {
+//    "empty": false,
+//    "name": "test",
+//    "sizeOnDisk": 73728
+//  }
+// ]
+
+use localhost
+
+    // adicionei um champions
+    db.champions.insertOne(
+        {
+            name: "Morgana",
+            role: "Support",
+            level: 12
+        }
+    )
+
+    // procurei o champion pelo nome
+    db.champions.find( { name: "Morgana" } )
+
+    // aqui coloquei vários champions
+    db.champions.insertMany([
+        {
+            name: "Brand",
+            role: "Support",
+            level: 9
+        },
+        {
+            name: "Fizz",
+            role: "Mid",
+            level: 12
+        }
+    ])
+
+    // pesquisei pelo Role para aparecerem vários
+    db.champions.find( { role: "Support" } )
+
+    // pesquisei pelo Role para aparecer o Fizz que acabei de adicionar
+    db.champions.find( { role: "Mid"} )
+
+    // pesquisei pelo level para aparecerem vários
+    db.champions.find( { level: 12 } )
+
+
+

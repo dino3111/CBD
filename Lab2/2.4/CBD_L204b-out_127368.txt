@@ -1,0 +1,4 @@
+Dino pediu 10 unidades de iPhone
+Dino pediu 12 unidades de AirPods
+Dino pediu 8 unidades de MacBook
+ERRO: Dino excedeu o limite.
